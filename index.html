@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Balance sheet</title>
+<meta name="theme-color" content="#1D5C4C">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Balance">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF2EF; --surface:#FFFFFF; --ink:#18231F; --muted:#5B6A64; --line:#D5DDD8;
+  --green:#1D5C4C; --green-soft:#DCEBE4; --mustard:#A97614; --mustard-soft:#F4E7CB;
+  --plum:#7B3A57; --plum-soft:#F2E1E9; --field:#F6F8F6;
+  --c-rent:#1D5C4C; --c-bills:#3B78A3; --c-home:#C08A22; --c-extra:#E0A94B; --c-pocket:#8A68B0;
+  --c-donation:#4D9A61; --c-unexpected:#B0476E; --c-allowance:#2A8F8A; --c-old:#6E7F37;
+  --c-new:#9C5A86; --c-edu:#5257C4; --c-custom:#7C8A85; --c-left:#C9D6CF;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#111816; --surface:#19221F; --ink:#E4ECE8; --muted:#97A6A0; --line:#2B3733;
+    --green:#6CC2A5; --green-soft:#1C332C; --mustard:#E2B65A; --mustard-soft:#3A3020;
+    --plum:#E58DB2; --plum-soft:#3A2431; --field:#141C19; --c-left:#2E3B37;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111816; --surface:#19221F; --ink:#E4ECE8; --muted:#97A6A0; --line:#2B3733;
+  --green:#6CC2A5; --green-soft:#1C332C; --mustard:#E2B65A; --mustard-soft:#3A3020;
+  --plum:#E58DB2; --plum-soft:#3A2431; --field:#141C19; --c-left:#2E3B37;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+/* Header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1000px;margin:0 auto;padding:12px 16px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-weight:700;font-size:1.05rem;letter-spacing:-.01em;margin-right:auto}
+.month{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.month button{border:0;background:transparent;width:34px;height:34px;border-radius:50%;font-size:1.1rem;line-height:1}
+.month button:hover{background:var(--field)}
+.month strong{min-width:132px;text-align:center;font-weight:600}
+.status{font-size:.8rem;color:var(--muted);min-width:64px;text-align:right}
+.status.err{color:var(--plum)}
+.tabs{max-width:1000px;margin:0 auto;padding:10px 12px 0;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{border:0;background:transparent;padding:8px 12px 10px;border-bottom:3px solid transparent;white-space:nowrap;color:var(--muted);font-weight:500}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--green)}
+.tab.add-tab{color:var(--green)}
+
+main{max-width:1000px;margin:0 auto;padding:20px 16px 64px}
+h2{font-size:1.5rem;letter-spacing:-.015em;margin:0 0 4px}
+.lede{color:var(--muted);margin:0 0 20px;max-width:62ch}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));align-items:start}
+
+/* Hero */
+.hero{padding:8px 0 24px}
+.hero-label{color:var(--muted);font-weight:500}
+.hero-num{font-size:clamp(2.6rem,9vw,4.6rem);font-weight:700;letter-spacing:-.035em;line-height:1.05;margin:2px 0 10px}
+.hero-num.neg{color:var(--plum)}
+.hero-sub{display:flex;gap:24px;flex-wrap:wrap;color:var(--muted)}
+.hero-sub b{color:var(--ink);font-weight:600}
+.flow{margin:22px 0 10px;display:flex;height:28px;border-radius:6px;overflow:hidden;background:var(--c-left)}
+.flow span{display:block;height:100%;min-width:2px}
+.legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px 20px;padding:0;margin:0;list-style:none;font-size:.92rem}
+.legend li{display:flex;align-items:center;gap:8px}
+.legend i{width:10px;height:10px;border-radius:2px;flex:none}
+.legend .amt{margin-left:auto;font-weight:600}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card h3{font-size:1.02rem;margin:0;font-weight:600}
+.card-head{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
+.card-head .total{margin-left:auto;font-weight:700;font-size:1.05rem}
+.hint{color:var(--muted);font-size:.88rem;margin:0 0 10px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat small{display:block;color:var(--muted);font-size:.85rem}
+.stat b{font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
+.pos{color:var(--green)} .neg{color:var(--plum)}
+
+/* Rows */
+.rows{display:flex;flex-direction:column;gap:6px}
+.row{display:grid;grid-template-columns:1fr 120px 32px;gap:6px;align-items:center}
+.row.with-date{grid-template-columns:1fr 132px 110px 32px}
+.row.with-cat{grid-template-columns:1fr 130px 132px 110px 32px}
+.row.debt{grid-template-columns:1fr 104px 104px 132px 32px}
+.row.with-bill{grid-template-columns:1fr 150px 120px 32px}
+.bill-grid{overflow-x:auto;margin-top:4px}
+.bill-grid table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:520px}
+.bill-grid th,.bill-grid td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.bill-grid th:first-child,.bill-grid td:first-child{text-align:left}
+.bill-grid th{font-weight:500;color:var(--muted)}
+.bill-grid td.paid-cell{color:var(--green);font-weight:600}
+.bill-grid td.miss{color:var(--muted)}
+.bill-grid .cur{background:var(--green-soft)}
+.bill-grid.ob td{padding:4px 3px}
+.bill-grid.ob td input{width:96px;height:38px;background:var(--field);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.bill-grid.ob td:first-child input{width:130px}
+.bill-grid.ob td input.filled{background:var(--green-soft);border-color:var(--green);font-weight:600}
+.bill-grid.ob td input.skip{border-style:dashed;background:var(--field);font-weight:500}
+.bill-grid.ob td input:focus{outline:none;border-color:var(--green);background:var(--surface)}
+.row input,.row select,.field input,.field select{width:100%;min-width:0;background:var(--field);border:1px solid var(--line);border-radius:8px;padding:8px 10px;height:40px}
+.row input.amt,.field input.amt{text-align:right;font-variant-numeric:tabular-nums}
+.row input:focus,.row select:focus,.field input:focus{border-color:var(--green);outline:none;background:var(--surface)}
+.del{border:0;background:transparent;color:var(--muted);height:32px;width:32px;border-radius:8px;font-size:1.15rem}
+.del:hover{background:var(--plum-soft);color:var(--plum)}
+.row-note{grid-column:1/-1}
+.colhead{display:grid;gap:6px;font-size:.78rem;color:var(--muted);padding:0 2px}
+.add{margin-top:8px;border:1px dashed var(--line);background:transparent;border-radius:8px;padding:8px 12px;color:var(--green);font-weight:600;width:100%}
+.add:hover{border-color:var(--green);background:var(--green-soft)}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.field label{font-size:.88rem;font-weight:500}
+.field-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 14px;font-weight:600}
+.btn.primary{background:var(--green);border-color:var(--green);color:var(--surface)}
+.btn.danger{color:var(--plum)}
+.btn:hover{border-color:var(--green)}
+.banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--mustard-soft);border-radius:12px;padding:12px 14px;margin-bottom:16px}
+.banner p{margin:0;flex:1;min-width:220px}
+.paid{opacity:.55}
+.badge{font-size:.75rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--green-soft);color:var(--green)}
+.progress{height:14px;border-radius:7px;background:var(--field);border:1px solid var(--line);overflow:hidden;margin:10px 0}
+.progress span{display:block;height:100%;background:var(--c-edu)}
+.chart-wrap{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.chart-wrap svg{flex:none}
+.empty{color:var(--muted);font-size:.92rem;padding:8px 0}
+.trend{width:100%;overflow-x:auto}
+.split{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line)}
+.split:last-child{border-bottom:0}
+.check{display:flex;align-items:center;gap:8px;font-size:.92rem}
+.sec-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:8px}
+.loading{padding:60px 0;text-align:center;color:var(--muted)}
+
+@media (max-width:640px){
+  .row,.row.with-date,.row.with-cat,.row.debt,.row.with-bill{grid-template-columns:1fr 1fr 32px}
+  .row > input:first-child{grid-column:1/3}
+  .row.with-cat select{grid-column:1/2}
+  .colhead{display:none}
+  .row{padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .month strong{min-width:112px;font-size:.95rem}
+}
+@media (prefers-reduced-motion:no-preference){
+  .hero-num{animation:rise .5s ease-out}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">Balance sheet</div>
+    <div class="month" role="group" aria-label="Month">
+      <button id="prev" aria-label="Previous month">‹</button>
+      <strong id="monthLabel"></strong>
+      <button id="next" aria-label="Next month">›</button>
+    </div>
+    <button class="btn" id="installBtn" hidden style="padding:6px 12px">Install app</button>
+    <div class="status" id="status" aria-live="polite"></div>
+  </div>
+  <nav class="tabs" id="tabs" role="tablist"></nav>
+</header>
+<main id="main"><div class="loading">Loading your balance sheet…</div></main>
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+
+<script src="firebase-config.js"></script>
+<script>
+(() => {
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const rid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { const n = parseFloat(String(v ?? '').replace(/,/g, '')); return isFinite(n) ? n : 0; };
+const sum = a => (a || []).reduce((s, i) => s + num(i.amount), 0);
+const clone = o => JSON.parse(JSON.stringify(o));
+const monthKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+const shiftMonth = (k, n) => { let [y, m] = k.split('-').map(Number); m += n; while (m > 12) { m -= 12; y++; } while (m < 1) { m += 12; y--; } return y + '-' + String(m).padStart(2, '0'); };
+const monthDiff = (a, b) => { const [y1, m1] = a.split('-').map(Number), [y2, m2] = b.split('-').map(Number); return (y2 - y1) * 12 + (m2 - m1); };
+const monthLabel = (k, short) => { const [y, m] = k.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('en-GB', short ? {month:'short'} : {month:'long', year:'numeric'}); };
+const fmt = n => { const c = state.config?.currency || 'Rs'; if (state.hide && state.tab === 'overview') return c + ' ••••••'; const s = Math.round(Math.abs(n)).toLocaleString('en-US'); return (n < 0 ? '−' : '') + c + ' ' + s; };
+
+/* ---------- defaults ---------- */
+const DEFAULT_CONFIG = {
+  currency: 'Rs', opening: '', eduLabel: "Sisters' education", eduTarget: '', eduDue: '', eduPaid: '',
+  custom: [], cats: ['Food', 'Transport', 'Mobile & internet', 'Clothes', 'Outings', 'Health', 'Gifts', 'Other']
+};
+const DEFAULT_LEDGER = { lent: [], iOwe: [], owedToMe: [] };
+const seedItem = label => ({ id: rid(), label, amount: '' });
+function seedLists() {
+  return {
+    income: [seedItem('My pay'), seedItem("Sister's pay")],
+    rent: [seedItem('House rent')],
+    bills: ['Electricity', 'Gas', 'Water', 'Internet'].map(seedItem),
+    home: [seedItem('Regular home expense')],
+    homeExtra: [], pocket: [seedItem('Sister 1'), seedItem('Sister 2')],
+    donation: [], unexpected: [],
+    oldHouse: [],
+    newHouse: [], myItems: []
+  };
+}
+const RECURRING = ['income', 'rent', 'bills', 'home', 'pocket', 'donation'];
+const DEFAULT_OLDBILLS = { start: '2026-06', bills: [{ id: 'b-ele', name: 'Electricity' }, { id: 'b-gas', name: 'Gas' }, { id: 'b-wat', name: 'Water' }], cells: {} };
+function oldPaidIn(k) {
+  let t = 0; const ob = state.oldBills; if (!ob) return 0;
+  for (const b of ob.bills) for (const c of Object.values(ob.cells[b.id] || {})) if (c.paidIn === k && !c.skip) t += num(c.amount);
+  return t;
+}
+function oldGridTotal() { let t = 0; for (const b of state.oldBills.bills) for (const c of Object.values(state.oldBills.cells[b.id] || {})) t += num(c.amount); return t; }
+
+const GROUPS = [
+  ['rent', 'Rent', '--c-rent'], ['bills', 'Bills', '--c-bills'], ['home', 'Home expense', '--c-home'],
+  ['homeExtra', 'Extra home expense', '--c-extra'], ['pocket', 'Pocket money', '--c-pocket'],
+  ['donation', 'Donation', '--c-donation'], ['unexpected', 'Unexpected', '--c-unexpected'],
+  ['allowance', 'My allowance', '--c-allowance'], ['oldHouse', 'Old house', '--c-old']
+];
+const CAT_COLORS = ['#2A8F8A', '#C08A22', '#8A68B0', '#3B78A3', '#B0476E', '#4D9A61', '#9C5A86', '#6E7F37', '#5257C4', '#7C8A85'];
+
+/* ---------- state ---------- */
+const state = { config: null, ledger: null, months: {}, cur: monthKey(new Date()), tab: 'overview', hide: (() => { try { return localStorage.getItem('bs-hide') === '1'; } catch (e) { return false; } })() };
+
+function getMonth(k = state.cur) {
+  if (!state.months[k]) state.months[k] = { month: k, lists: seedLists(), allowance: '', edu: '', _new: true };
+  const m = state.months[k];
+  for (const c of state.config.custom) m.lists[c.id] ||= [];
+  for (const key of Object.keys(seedLists())) m.lists[key] ||= [];
+  return m;
+}
+function touchMonth(k = state.cur) { const m = getMonth(k); m._new = false; markDirty('m-' + k); }
+function savedMonths() { return Object.entries(state.months).filter(([, m]) => !m._new).map(([k]) => k).sort(); }
+function prevSaved(k) { return savedMonths().filter(x => x < k).pop(); }
+
+function groupsFor(m) {
+  const L = m.lists;
+  const g = GROUPS.map(([key, label, color]) => ({ key, label, color: `var(${color})`, value: key === 'allowance' ? num(m.allowance) : key === 'oldHouse' ? sum(L[key]) + oldPaidIn(m.month) : sum(L[key]) }));
+  state.config.custom.filter(c => c.counts).forEach(c => g.push({ key: c.id, label: c.name, color: 'var(--c-custom)', value: sum(L[c.id]) }));
+  return g;
+}
+function calc(m) {
+  const income = sum(m.lists.income);
+  const spent = groupsFor(m).reduce((s, x) => s + x.value, 0);
+  const edu = num(m.edu);
+  return { income, spent, edu, left: income - spent - edu };
+}
+function carried(k) {
+  let c = num(state.config.opening);
+  for (const mk of savedMonths()) if (mk < k) c += calc(state.months[mk]).left;
+  return c;
+}
+function eduSaved() {
+  let t = 0;
+  for (const [k, m] of Object.entries(state.months)) if (!m._new || k === state.cur) t += num(m.edu);
+  return t - num(state.config.eduPaid);
+}
+
+/* ---------- storage ---------- */
+const FB_VERSION = '10.12.2';
+const store = {
+  kind: 'local',
+  async init() {
+    const cfg = window.FIREBASE_CONFIG;
+    if (!cfg || !cfg.apiKey || String(cfg.apiKey).startsWith('PASTE')) { this.kind = 'local'; return; }
+    const base = `https://www.gstatic.com/firebasejs/${FB_VERSION}/`;
+    const [appMod, authMod, fsMod] = await Promise.all([
+      import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-firestore.js')]);
+    const app = appMod.initializeApp(cfg);
+    this.authMod = authMod; this.fs = fsMod;
+    this.auth = authMod.getAuth(app);
+    try { this.db = fsMod.initializeFirestore(app, { localCache: fsMod.persistentLocalCache({ tabManager: fsMod.persistentMultipleTabManager() }) }); }
+    catch (e) { this.db = fsMod.getFirestore(app); }
+    try { await authMod.getRedirectResult(this.auth); } catch (e) {}
+    const user = await new Promise(res => { const un = authMod.onAuthStateChanged(this.auth, u => { un(); res(u); }); });
+    if (!user) { this.kind = 'signin'; return; }
+    this.user = user; this.kind = 'cloud';
+  },
+  col() { return this.fs.collection(this.db, 'users', this.user.uid, 'docs'); },
+  async loadAll() {
+    if (this.kind === 'cloud') {
+      const snap = await this.fs.getDocs(this.col());
+      const out = {};
+      snap.forEach(d => { out[d.id] = clone(d.data()); });
+      return out;
+    }
+    try { return JSON.parse(localStorage.getItem('family-balance-sheet') || '{}'); } catch (e) { return {}; }
+  },
+  async save(id, body) {
+    if (this.kind === 'cloud') {
+      const write = this.fs.setDoc(this.fs.doc(this.col(), id), clone(body));
+      // offline: the write is kept on the device and syncs later, so don't wait forever
+      const t = await Promise.race([write.then(() => 'ok'), new Promise(r => setTimeout(() => r('offline'), 5000))]);
+      if (t === 'offline') this.pendingOffline = true;
+      return;
+    }
+    let all = {};
+    try { all = JSON.parse(localStorage.getItem('family-balance-sheet') || '{}'); } catch (e) {}
+    all[id] = body;
+    try { localStorage.setItem('family-balance-sheet', JSON.stringify(all)); } catch (e) { throw { code: 'local', message: 'This browser could not save.' }; }
+  },
+  async signIn() {
+    const p = new this.authMod.GoogleAuthProvider();
+    try { await this.authMod.signInWithPopup(this.auth, p); location.reload(); }
+    catch (e) {
+      if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) return this.authMod.signInWithRedirect(this.auth, p);
+      throw e;
+    }
+  },
+  async signOut() { await this.authMod.signOut(this.auth); location.reload(); }
+};
+async function retry(fn) {
+  try { return await fn(); }
+  catch (e) {
+    if (e && e.code === 'unavailable') { await new Promise(r => setTimeout(r, 400 + Math.random() * 600)); return fn(); }
+    throw e;
+  }
+}
+function applyDocs(all) {
+  state.config = Object.assign(clone(DEFAULT_CONFIG), all.config || {});
+  state.ledger = Object.assign(clone(DEFAULT_LEDGER), all.ledger || {});
+  const keep = {};
+  for (const [id, body] of Object.entries(all)) {
+    if (id.startsWith('m-')) { const k = id.slice(2); keep[k] = Object.assign({ lists: {}, allowance: '', edu: '' }, body, { month: k }); }
+  }
+  state.months = keep;
+  state.oldBills = Object.assign(clone(DEFAULT_OLDBILLS), all.oldBills || {});
+  // move old-house bill lines from earlier versions into the bill grid
+  let moved = false;
+  for (const [k, m] of Object.entries(keep)) {
+    const list = m.lists && m.lists.oldHouse; if (!list) continue;
+    const names = state.oldBills.bills.map(b => b.name.toLowerCase());
+    const rest = list.filter(it => {
+      const nm = (it.label || '').trim();
+      if (it.billFor && num(it.amount) && nm) {
+        let b = state.oldBills.bills.find(x => x.name.toLowerCase() === nm.toLowerCase());
+        if (!b) { b = { id: 'b-' + rid(), name: nm }; state.oldBills.bills.push(b); }
+        (state.oldBills.cells[b.id] ||= {})[it.billFor] = { amount: it.amount, paidIn: k };
+        return false;
+      }
+      if (it.billFor || (!num(it.amount) && names.includes(nm.toLowerCase()))) return false;
+      return true;
+    });
+    if (rest.length !== list.length) { m.lists.oldHouse = rest; moved = true; dirty.add('m-' + k); }
+  }
+  if (moved) markDirty('oldBills');
+}
+
+const dirty = new Set(); let saveTimer = null, flushing = false;
+function markDirty(id) { dirty.add(id); setStatus('Saving…'); clearTimeout(saveTimer); saveTimer = setTimeout(flush, 700); }
+function bodyFor(id) {
+  if (id === 'config') return state.config;
+  if (id === 'ledger') return state.ledger;
+  if (id === 'oldBills') return state.oldBills;
+  const { _new, ...rest } = state.months[id.slice(2)];
+  return rest;
+}
+async function flush() {
+  if (flushing) { saveTimer = setTimeout(flush, 400); return; }
+  flushing = true;
+  try {
+    while (dirty.size) { const id = [...dirty][0]; dirty.delete(id); await store.save(id, bodyFor(id)); }
+    setStatus(store.kind === 'cloud' ? (store.pendingOffline ? 'Saved offline' : 'Saved') : 'Saved on this device');
+    store.pendingOffline = false;
+  } catch (e) {
+    setStatus(e && e.code === 'quota_exceeded' ? 'Storage full' : 'Not saved, retrying', true);
+    setTimeout(() => { for (const id of ['config', 'ledger']) dirty.add(id); flush(); }, 4000);
+  }
+  flushing = false;
+}
+function setStatus(t, err) { const s = $('#status'); s.textContent = t; s.classList.toggle('err', !!err); }
+
+/* ---------- tabs ---------- */
+function tabs() {
+  const t = [['overview', 'Overview'], ['income', 'Income'], ['home', 'Home'], ['allowance', 'My allowance'],
+    ['oldHouse', 'Old house'], ['newHouse', 'New house'], ['edu', 'Education fund'], ['debts', 'Debts']];
+  state.config.custom.forEach(c => t.push(['c:' + c.id, c.name]));
+  t.push(['settings', 'Settings']);
+  return t;
+}
+function renderTabs() {
+  $('#tabs').innerHTML = tabs().map(([id, label]) =>
+    `<button class="tab" role="tab" data-tab="${esc(id)}" aria-selected="${state.tab === id}">${esc(label)}</button>`).join('') +
+    `<button class="tab add-tab" data-tab="settings" data-focus="newSection">+ Section</button>`;
+}
+
+/* ---------- building blocks ---------- */
+function listCard({ src = 'm', key, title, hint = '', mode = 'basic', placeholder = 'What for', totalNote = '' }) {
+  const items = src === 'm' ? getMonth().lists[key] : state.ledger[key];
+  const total = src === 'm' ? sum(items) : items.reduce((s, i) => s + num(i.amount) - num(i.repaid), 0);
+  const cls = { basic: '', date: 'with-date', cat: 'with-cat', debt: 'debt', bill: 'with-bill' }[mode];
+  const head = mode === 'debt'
+    ? `<div class="colhead row debt"><span>Name</span><span>Amount</span><span>Paid back</span><span>Date</span><span></span></div>`
+    : mode === 'bill' ? `<div class="colhead row with-bill"><span>Bill</span><span>Bill for month</span><span style="text-align:right">Amount paid</span><span></span></div>` : '';
+  const rows = items.map(i => rowHtml(src, key, i, mode, cls, placeholder)).join('');
+  return `<section class="card" data-card="${esc(key)}">
+    <div class="card-head"><h3>${esc(title)}</h3><span class="total num" data-total="${src}:${esc(key)}">${fmt(total)}</span></div>
+    ${hint ? `<p class="hint">${hint}</p>` : ''}${totalNote}
+    ${head}<div class="rows">${rows || `<div class="empty">Nothing added yet.</div>`}</div>
+    <button class="add" data-add="${src}:${esc(key)}" data-mode="${mode}">Add ${mode === 'debt' ? 'person' : 'item'}</button>
+  </section>`;
+}
+function rowHtml(src, key, i, mode, cls, placeholder) {
+  const a = `data-src="${src}" data-key="${esc(key)}" data-id="${esc(i.id)}"`;
+  const amt = (f, ph) => `<input class="amt" data-f="${f}" inputmode="decimal" placeholder="${ph}" value="${esc(i[f])}" aria-label="${ph}">`;
+  const date = `<input type="date" data-f="date" value="${esc(i.date)}" aria-label="Date">`;
+  const del = `<button class="del" data-del aria-label="Remove">×</button>`;
+  if (mode === 'debt') return `<div class="row debt ${num(i.amount) && num(i.repaid) >= num(i.amount) ? 'paid' : ''}" ${a}>
+      <input data-f="label" placeholder="Name" value="${esc(i.label)}" aria-label="Name">${amt('amount', 'Amount')}${amt('repaid', 'Paid back')}${date}${del}
+      <input class="row-note" data-f="note" placeholder="Note (optional)" value="${esc(i.note)}" aria-label="Note"></div>`;
+  if (mode === 'bill') return `<div class="row with-bill" ${a}><input data-f="label" placeholder="Electricity, gas…" value="${esc(i.label)}" aria-label="Bill">
+      <input type="month" data-f="billFor" value="${esc(i.billFor || state.cur)}" aria-label="Bill for month">${amt('amount', '0')}${del}</div>`;
+  if (mode === 'cat') {
+    const cats = state.config.cats.includes(i.cat) || !i.cat ? state.config.cats : [...state.config.cats, i.cat];
+    return `<div class="row with-cat" ${a}><input data-f="label" placeholder="${placeholder}" value="${esc(i.label)}" aria-label="Item">
+      <select data-f="cat" aria-label="Category">${cats.map(c => `<option ${c === (i.cat || 'Other') ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+      ${date}${amt('amount', '0')}${del}</div>`;
+  }
+  return `<div class="row ${cls}" ${a}><input data-f="label" placeholder="${placeholder}" value="${esc(i.label)}" aria-label="Item">
+    ${mode === 'date' ? date : ''}${amt('amount', '0')}${del}</div>`;
+}
+function scalar(path, label, value, opts = {}) {
+  return `<div class="field"><label for="f-${esc(path)}">${label}</label>
+    <input id="f-${esc(path)}" ${opts.type === 'date' ? 'type="date"' : `class="${opts.text ? '' : 'amt'}" inputmode="${opts.text ? 'text' : 'decimal'}"`} data-scalar="${esc(path)}" value="${esc(value)}" placeholder="${opts.ph || (opts.text ? '' : '0')}"></div>`;
+}
+function donut(parts, size = 170) {
+  const total = parts.reduce((s, p) => s + p.value, 0);
+  const r = 62, C = 2 * Math.PI * r; let off = 0;
+  const arcs = total > 0 ? parts.filter(p => p.value > 0).map(p => {
+    const len = p.value / total * C;
+    const s = `<circle r="${r}" cx="85" cy="85" fill="none" stroke="${p.color}" stroke-width="22" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}" transform="rotate(-90 85 85)"><title>${esc(p.label)}: ${fmt(p.value)}</title></circle>`;
+    off += len; return s;
+  }).join('') : `<circle r="${r}" cx="85" cy="85" fill="none" stroke="var(--line)" stroke-width="22"/>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 170 170" role="img" aria-label="Breakdown chart">${arcs}
+    <text x="85" y="82" text-anchor="middle" font-size="11" fill="var(--muted)">Total</text>
+    <text x="85" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">${esc(fmt(total))}</text></svg>`;
+}
+function legend(parts) {
+  return `<ul class="legend">${parts.filter(p => p.value > 0).map(p =>
+    `<li><i style="background:${p.color}"></i>${esc(p.label)}<span class="amt num">${fmt(p.value)}</span></li>`).join('') || '<li class="empty">No spending yet.</li>'}</ul>`;
+}
+
+/* ---------- views ---------- */
+const views = {
+  overview() {
+    const m = getMonth(), c = calc(m), carry = carried(state.cur), end = carry + c.left;
+    const parts = groupsFor(m).filter(g => g.value > 0);
+    if (c.edu > 0) parts.push({ key: 'edu', label: 'Education fund', color: 'var(--c-edu)', value: c.edu });
+    const denom = Math.max(c.income, c.spent + c.edu, 1);
+    const flow = parts.map(p => `<span style="width:${p.value / denom * 100}%;background:${p.color}" title="${esc(p.label)}: ${esc(fmt(p.value))}"></span>`).join('');
+    const prev = prevSaved(state.cur);
+    const owed = state.ledger.lent.reduce((s, i) => s + Math.max(0, num(i.amount) - num(i.repaid)), 0);
+    const target = num(state.config.eduTarget), saved = eduSaved();
+    // trend: last 6 months
+    const ks = Array.from({ length: 6 }, (_, i) => shiftMonth(state.cur, i - 5));
+    const vals = ks.map(k => state.months[k] && (!state.months[k]._new || k === state.cur) ? calc(state.months[k]).left : null);
+    const max = Math.max(1, ...vals.map(v => Math.abs(v || 0)));
+    const W = 600, H = 160, bw = 60, gap = (W - bw * 6) / 6;
+    const bars = ks.map((k, i) => {
+      const v = vals[i], x = gap / 2 + i * (bw + gap), h = v === null ? 0 : Math.abs(v) / max * 55;
+      const y = v >= 0 ? 75 - h : 75;
+      return `<g><rect x="${x}" y="${y}" width="${bw}" height="${Math.max(h, v === null ? 0 : 2)}" rx="4" fill="${v === null ? 'none' : v >= 0 ? 'var(--green)' : 'var(--plum)'}" ${k === state.cur ? '' : 'opacity=".7"'}><title>${esc(monthLabel(k))}: ${v === null ? 'no data' : esc(fmt(v))}</title></rect>
+        <text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="13" fill="${k === state.cur ? 'var(--ink)' : 'var(--muted)'}" font-weight="${k === state.cur ? 700 : 400}">${esc(monthLabel(k, true))}</text></g>`;
+    }).join('');
+    return `
+      ${m._new && prev ? copyBanner(prev) : ''}
+      <section class="hero">
+        <div class="hero-label" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span>Money in hand at the end of ${esc(monthLabel(state.cur))}</span>
+          <button class="btn" id="hideBtn" aria-pressed="${state.hide}" style="margin-left:auto;padding:6px 12px">${state.hide ? 'Show amounts' : 'Hide amounts'}</button></div>
+        <div class="hero-num num ${end < 0 ? 'neg' : ''}">${fmt(end)}</div>
+        <div class="hero-sub"><span>Carried from earlier months <b class="num">${fmt(carry)}</b></span>
+          <span>Left this month <b class="num ${c.left < 0 ? 'neg' : ''}">${fmt(c.left)}</b></span></div>
+        <div class="flow" aria-hidden="true">${flow}</div>
+        ${legend(parts.concat(c.left > 0 ? [{ label: 'Left over', color: 'var(--c-left)', value: c.left }] : []))}
+      </section>
+      <div class="stats">
+        <div class="stat"><small>Income</small><b class="num">${fmt(c.income)}</b></div>
+        <div class="stat"><small>Spent</small><b class="num">${fmt(c.spent)}</b></div>
+        <div class="stat"><small>Set aside for education</small><b class="num">${fmt(c.edu)}</b></div>
+        <div class="stat"><small>People owe us</small><b class="num">${fmt(owed)}</b></div>
+      </div>
+      <div class="grid">
+        <section class="card"><div class="card-head"><h3>${esc(state.config.eduLabel || 'Education fund')}</h3>
+          <span class="total num">${fmt(saved)}${target ? ' of ' + fmt(target) : ''}</span></div>
+          ${target ? `<div class="progress"><span style="width:${Math.min(100, saved / target * 100)}%"></span></div>
+            <p class="hint">${saved >= target ? 'Target reached.' : fmt(target - saved) + ' still needed' + (state.config.eduDue ? ' by ' + esc(new Date(state.config.eduDue).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })) : '') + '.'}</p>`
+            : `<p class="hint">Set a target in the Education fund tab to track progress.</p>`}
+        </section>
+        <section class="card"><div class="card-head"><h3>Left over, last 6 months</h3></div>
+          <div class="trend"><svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Monthly left over">
+            <line x1="0" x2="${W}" y1="75" y2="75" stroke="var(--line)"/>${bars}</svg></div>
+        </section>
+      </div>`;
+  },
+  income() {
+    return `<h2>Income</h2><p class="lede">Everything that came in this month.</p>${bannerIfNeeded()}
+      <div class="grid">${listCard({ key: 'income', title: 'Income this month', placeholder: 'Source' })}</div>`;
+  },
+  home() {
+    return `<h2>Home</h2><p class="lede">Household spending from the shared income.</p>${bannerIfNeeded()}
+    <div class="grid">
+      ${listCard({ key: 'rent', title: 'Rent' })}
+      ${listCard({ key: 'bills', title: 'Bills (new house)', mode: 'bill', hint: 'Bills for the house you live in. Pick which month each bill is for. They also show in the New house tab.' })}
+      ${listCard({ key: 'home', title: 'Home expense', hint: 'The regular monthly amount for the house.' })}
+      ${listCard({ key: 'homeExtra', title: 'Extra home expense', mode: 'date', hint: 'Anything given on top of the regular amount this month.' })}
+      ${listCard({ key: 'pocket', title: 'Pocket money', placeholder: 'Name', hint: 'Monthly pocket money for your sisters.' })}
+      ${listCard({ key: 'donation', title: 'Donation', mode: 'date', placeholder: 'To whom / what for' })}
+      ${listCard({ key: 'unexpected', title: 'Unexpected purchases', mode: 'date', hint: 'Repairs, emergencies, one-off buys.' })}
+    </div>`;
+  },
+  allowance() {
+    const m = getMonth();
+    return `<h2>My allowance</h2><p class="lede">Your share of the money and where it actually goes. The allowance amount counts as spending in the main sheet; the items below just break it down.</p>${bannerIfNeeded()}
+    <div class="grid">
+      <section class="card">${scalar('m.allowance', 'Allowance this month', m.allowance)}
+        <div data-live="allowanceSummary">${liveRenderers.allowanceSummary()}</div></section>
+      ${listCard({ key: 'myItems', title: 'Where it went', mode: 'cat' })}
+      ${listCard({ src: 'l', key: 'owedToMe', title: 'Others owe me', mode: 'debt', hint: 'Personal money you lent. Not tied to a month.' })}
+      ${listCard({ src: 'l', key: 'iOwe', title: 'I owe others', mode: 'debt', hint: 'Personal money you need to pay back.' })}
+    </div>`;
+  },
+  oldHouse() {
+    const ob = state.oldBills;
+    const end = [monthKey(new Date()), state.cur, ob.start].sort().pop();
+    const cols = Array.from({ length: monthDiff(ob.start, end) + 1 }, (_, i) => shiftMonth(ob.start, i));
+    const table = `<div class="bill-grid ob"><table><thead><tr><th>Bill</th>${cols.map(c => `<th>${esc(monthLabel(c, true))} ${c.slice(2, 4)}</th>`).join('')}<th></th></tr></thead><tbody>
+      ${ob.bills.map(b => `<tr><td><input data-billname="${esc(b.id)}" value="${esc(b.name)}" aria-label="Bill name"></td>${cols.map(c => { const cell = (ob.cells[b.id] || {})[c]; return `<td><input class="amt ${cell ? 'filled' : ''} ${cell && cell.skip ? 'skip' : ''}" inputmode="decimal" placeholder="—" data-cell="${esc(b.id)}|${c}" value="${esc(cell ? cell.amount : '')}" aria-label="${esc(b.name)} bill for ${esc(monthLabel(c))}"></td>`; }).join('')}
+        <td><button class="del" data-delbill="${esc(b.id)}" aria-label="Remove bill">×</button></td></tr>`).join('')}
+      </tbody></table></div>`;
+    return `<h2>Old house</h2><p class="lede">Your own house. In the table, each box is one bill for one month. Type what you paid for that month's bill and leave it empty if it's not paid yet. All-time total: <b class="num" data-total="all:oldHouse">${fmt(oldGridTotal() + savedMonths().concat(state.cur).filter((v, i, a) => a.indexOf(v) === i).reduce((s, k) => s + sum(getMonth(k).lists.oldHouse), 0))}</b></p>
+      <section class="card" style="margin-bottom:16px"><div class="card-head"><h3>Monthly bills</h3></div>
+        <div class="field" style="max-width:220px"><label for="obStart">Track from</label><input id="obStart" type="month" data-scalar="o.start" value="${esc(ob.start)}"></div>
+        ${table}
+        <div class="sec-row" style="margin-top:12px;grid-template-columns:1fr auto"><input id="newBill" placeholder="Add another bill, e.g. Property tax" style="height:40px;border:1px solid var(--line);border-radius:8px;background:var(--field);padding:8px 10px"><button class="btn primary" id="addBill">Add bill</button></div>
+      </section>
+      <div class="grid"><section class="card" data-live="oldPaid">${liveRenderers.oldPaid()}</section>
+      ${listCard({ key: 'oldHouse', title: 'Other costs in ' + monthLabel(state.cur), mode: 'date', hint: 'Repairs, maintenance, anything that is not a monthly bill.' })}</div>`;
+  },
+  newHouse() {
+    return `<h2>New house</h2><p class="lede">The house you're living in now. Rent stays in the Home tab. Furniture and setup, all-time total: <b class="num" data-live="newHouseTotal">${liveRenderers.newHouseTotal()}</b></p>${bannerIfNeeded()}
+      <div class="grid">
+      ${listCard({ key: 'bills', title: 'Bills paid in ' + monthLabel(state.cur), mode: 'bill', hint: 'Same bills as in the Home tab. Entered once, counted once.' })}
+      <section class="card"><div class="card-head"><h3>Bill history</h3></div><p class="hint">Which month's bills are paid. A dash means nothing recorded yet.</p><div data-live="newGrid">${liveRenderers.newGrid()}</div></section>
+      ${listCard({ key: 'newHouse', title: 'Furniture & setup (reference only)', mode: 'date', placeholder: 'Item', hint: 'Just a record of what you bought for the house. It does not cut from your monthly amount. Money that should come out of the month goes in Extra home expense in the Home tab.' })}</div>`;
+  },
+  edu() {
+    const m = getMonth();
+    return `<h2>${esc(state.config.eduLabel || 'Education fund')}</h2><p class="lede">Money set aside each month is taken out of what's left, so it can't be spent by accident.</p>
+    <div class="grid">
+      <section class="card">
+        ${scalar('m.edu', 'Set aside in ' + monthLabel(state.cur), m.edu)}
+        <div data-live="eduSummary">${liveRenderers.eduSummary()}</div>
+      </section>
+      <section class="card"><h3 style="margin-bottom:12px">Goal</h3>
+        ${scalar('c.eduLabel', 'Name', state.config.eduLabel, { text: true })}
+        <div class="field-row">${scalar('c.eduTarget', 'Target amount', state.config.eduTarget)}${scalar('c.eduDue', 'Due date', state.config.eduDue, { type: 'date' })}</div>
+        ${scalar('c.eduPaid', 'Already paid out of the fund', state.config.eduPaid)}
+      </section>
+    </div>`;
+  },
+  debts() {
+    return `<h2>Debts</h2><p class="lede">Money lent from the household income and what's been paid back. Not tied to a month.</p>
+      <div class="grid">${listCard({ src: 'l', key: 'lent', title: 'People who owe us', mode: 'debt' })}</div>`;
+  },
+  custom(id) {
+    const c = state.config.custom.find(x => x.id === id);
+    if (!c) { state.tab = 'overview'; return views.overview(); }
+    return `<h2>${esc(c.name)}</h2><p class="lede">${c.counts ? 'Counts as spending in the main sheet.' : 'Tracked separately. Does not affect what\'s left.'}</p>
+      <div class="grid">${listCard({ key: c.id, title: 'This month', mode: 'date' })}
+      <section class="card"><label class="check"><input type="checkbox" data-counts="${esc(c.id)}" ${c.counts ? 'checked' : ''}> Count this section as spending</label></section></div>`;
+  },
+  settings() {
+    return `<h2>Settings</h2><p class="lede">Add your own sections, set your starting balance, and keep a backup.</p>
+    <div class="grid">
+      <section class="card"><h3 style="margin-bottom:8px">Your sections</h3>
+        <p class="hint">Create a new section for anything else you want to track, like a car, a wedding or a business.</p>
+        ${state.config.custom.map(c => `<div class="sec-row"><input data-rename="${esc(c.id)}" value="${esc(c.name)}" aria-label="Section name" style="height:40px;border:1px solid var(--line);border-radius:8px;background:var(--field);padding:8px 10px">
+          <label class="check"><input type="checkbox" data-counts="${esc(c.id)}" ${c.counts ? 'checked' : ''}> Spending</label>
+          <button class="del" data-remove-section="${esc(c.id)}" aria-label="Delete section">×</button></div>`).join('') || '<p class="empty">No extra sections yet.</p>'}
+        <div class="sec-row" style="margin-top:12px"><input id="newSection" placeholder="New section name" style="height:40px;border:1px solid var(--line);border-radius:8px;background:var(--field);padding:8px 10px">
+          <label class="check"><input type="checkbox" id="newCounts" checked> Spending</label>
+          <button class="btn primary" id="addSection">Add</button></div>
+      </section>
+      <section class="card"><h3 style="margin-bottom:12px">Money</h3>
+        ${scalar('c.opening', 'Cash in hand before the first month', state.config.opening)}
+        ${scalar('c.currency', 'Currency label', state.config.currency, { text: true })}
+        <div class="field"><label for="cats">Allowance categories (comma separated)</label>
+          <input id="cats" data-cats value="${esc(state.config.cats.join(', '))}" style="height:40px;border:1px solid var(--line);border-radius:8px;background:var(--field);padding:8px 10px"></div>
+      </section>
+      <section class="card"><h3 style="margin-bottom:8px">Your data</h3>
+        <p class="hint">${store.kind === 'cloud'
+          ? 'Synced with your Google account (' + esc(store.user.email || '') + '). Sign in with the same account on any phone or computer to see the same data. Only you can see it.'
+          : 'Sync is not set up yet, so data is kept on this device only. See the README to connect Firebase.'}</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="exportBtn">Download backup</button>
+          <button class="btn" id="importBtn">Restore from backup</button>
+          ${store.kind === 'cloud' ? '<button class="btn danger" id="signOutBtn">Sign out</button>' : ''}</div>
+        <p class="hint" id="dataMsg" style="margin-top:10px"></p>
+      </section>
+    </div>`;
+  }
+};
+function billGrid(key) {
+  const months = savedMonths().concat(state.cur).filter((v, i, a) => a.indexOf(v) === i);
+  const rows = new Map(); let last = state.cur;
+  for (const k of months) for (const it of getMonth(k).lists[key] || []) {
+    const name = (it.label || '').trim(); if (!name || !num(it.amount)) continue;
+    const bm = it.billFor || k; if (bm > last) last = bm;
+    const id = name.toLowerCase();
+    if (!rows.has(id)) rows.set(id, { name, cells: {} });
+    const c = rows.get(id).cells[bm] ||= { amt: 0, n: 0 }; c.amt += num(it.amount); c.n++;
+  }
+  if (!rows.size) return '<p class="empty">Bills show here once you enter an amount.</p>';
+  const cols = Array.from({ length: 6 }, (_, i) => shiftMonth(last, i - 5));
+  return `<div class="bill-grid"><table><thead><tr><th>Bill</th>${cols.map(c => `<th class="${c === state.cur ? 'cur' : ''}">${esc(monthLabel(c, true))}</th>`).join('')}</tr></thead><tbody>${[...rows.values()].map(r => `<tr><td>${esc(r.name)}</td>${cols.map(c => { const x = r.cells[c]; return x ? `<td class="paid-cell num ${c === state.cur ? 'cur' : ''}">${fmt(x.amt)}</td>` : `<td class="miss ${c === state.cur ? 'cur' : ''}">—</td>`; }).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+const liveRenderers = {
+  oldPaid() {
+    const ob = state.oldBills, lines = [];
+    for (const b of ob.bills) for (const [bm, c] of Object.entries(ob.cells[b.id] || {})) if (c.paidIn === state.cur && num(c.amount)) lines.push({ label: b.name + ' (' + monthLabel(bm, true) + ' ' + bm.slice(0, 4) + ')', amt: num(c.amount), ref: b.id + '|' + bm, skip: !!c.skip });
+    lines.sort((a, b) => a.ref.split('|')[1] < b.ref.split('|')[1] ? -1 : 1);
+    const t = lines.filter(l => !l.skip).reduce((s, l) => s + l.amt, 0);
+    return `<div class="card-head"><h3>Bills paid in ${esc(monthLabel(state.cur))}</h3><span class="total num">${fmt(t)}</span></div>
+      <p class="hint">Bills you fill in while viewing ${esc(monthLabel(state.cur))} count as its spending. Untick a bill to keep it as a record only, for example one paid before you started tracking.</p>
+      ${lines.map(l => `<div class="split ${l.skip ? 'paid' : ''}"><label class="check"><input type="checkbox" data-skip="${esc(l.ref)}" ${l.skip ? '' : 'checked'}> ${esc(l.label)}${l.skip ? ' <span class="badge">Record only</span>' : ''}</label><b class="num">${fmt(l.amt)}</b></div>`).join('') || '<p class="empty">None yet.</p>'}`;
+  },
+  newGrid() { return billGrid('bills'); },
+  allowanceSummary() {
+    const m = getMonth(), spent = sum(m.lists.myItems), left = num(m.allowance) - spent;
+    const by = {};
+    m.lists.myItems.forEach(i => { const c = i.cat || 'Other'; by[c] = (by[c] || 0) + num(i.amount); });
+    const parts = Object.entries(by).sort((a, b) => b[1] - a[1]).map(([label, value], i) => ({ label, value, color: CAT_COLORS[i % CAT_COLORS.length] }));
+    return `<div class="split"><span>Spent from allowance</span><b class="num">${fmt(spent)}</b></div>
+      <div class="split"><span>Remaining</span><b class="num ${left < 0 ? 'neg' : 'pos'}">${fmt(left)}</b></div>
+      <div class="chart-wrap" style="margin-top:14px">${donut(parts)}<div style="flex:1;min-width:180px">${legend(parts)}</div></div>`;
+  },
+  eduSummary() {
+    const target = num(state.config.eduTarget), saved = eduSaved();
+    let monthsLeft = null;
+    if (state.config.eduDue) { const d = new Date(state.config.eduDue), [y, mo] = state.cur.split('-').map(Number); monthsLeft = (d.getFullYear() - y) * 12 + (d.getMonth() + 1 - mo); }
+    const need = target - saved;
+    const hist = Object.entries(state.months).filter(([k, m]) => num(m.edu) && (!m._new || k === state.cur)).sort();
+    return `${target ? `<div class="progress"><span style="width:${Math.min(100, saved / target * 100)}%"></span></div>` : ''}
+      <div class="split"><span>Saved so far</span><b class="num">${fmt(saved)}</b></div>
+      ${target ? `<div class="split"><span>Still needed</span><b class="num ${need > 0 ? '' : 'pos'}">${fmt(Math.max(0, need))}</b></div>` : ''}
+      ${target && monthsLeft !== null && need > 0 ? `<div class="split"><span>${monthsLeft > 0 ? `Per month for the next ${monthsLeft} month${monthsLeft > 1 ? 's' : ''}` : 'Due date has passed'}</span><b class="num">${monthsLeft > 0 ? fmt(need / monthsLeft) : ''}</b></div>` : ''}
+      ${hist.length ? `<p class="hint" style="margin-top:12px">${hist.map(([k, m]) => esc(monthLabel(k)) + ': ' + fmt(num(m.edu))).join('<br>')}</p>` : ''}`;
+  },
+  newHouseTotal() {
+    return fmt(savedMonths().concat(state.cur).filter((v, i, a) => a.indexOf(v) === i).reduce((s, k) => s + sum(getMonth(k).lists.newHouse), 0));
+  }
+};
+function copyBanner(prev) {
+  return `<div class="banner"><p>${esc(monthLabel(state.cur))} is empty. Copy regular amounts (income, rent, bills, home, pocket money, donation, allowance) from ${esc(monthLabel(prev))}?</p>
+    <button class="btn primary" data-copy="${esc(prev)}">Copy from ${esc(monthLabel(prev, true))}</button></div>`;
+}
+function bannerIfNeeded() { const m = getMonth(), p = prevSaved(state.cur); return m._new && p ? copyBanner(p) : ''; }
+
+function render() {
+  $('#monthLabel').textContent = monthLabel(state.cur);
+  renderTabs();
+  const t = state.tab;
+  $('#main').innerHTML = t.startsWith('c:') ? views.custom(t.slice(2)) : (views[t] || views.overview)();
+}
+function refreshLive() {
+  document.querySelectorAll('[data-total]').forEach(el => {
+    const [src, key] = el.dataset.total.split(':');
+    if (src === 'm') el.textContent = fmt(sum(getMonth().lists[key]));
+    else if (src === 'l') el.textContent = fmt(state.ledger[key].reduce((s, i) => s + num(i.amount) - num(i.repaid), 0));
+    else if (src === 'all') el.textContent = fmt((key === 'oldHouse' ? oldGridTotal() : 0) + savedMonths().concat(state.cur).filter((v, i, a) => a.indexOf(v) === i).reduce((s, k) => s + sum(getMonth(k).lists[key]), 0));
+  });
+  document.querySelectorAll('[data-live]').forEach(el => { el.innerHTML = liveRenderers[el.dataset.live](); });
+}
+
+/* ---------- events ---------- */
+function rowTarget(el) {
+  const row = el.closest('.row[data-id]'); if (!row) return null;
+  const { src, key, id } = row.dataset;
+  const list = src === 'm' ? getMonth().lists[key] : state.ledger[key];
+  return { row, src, key, list, item: list.find(i => i.id === id) };
+}
+function save(src) { src === 'm' ? touchMonth() : markDirty('ledger'); }
+
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.f) {
+    const t = rowTarget(el); if (!t || !t.item) return;
+    t.item[el.dataset.f] = el.value; save(t.src);
+    if (t.src === 'l') t.row.classList.toggle('paid', num(t.item.amount) > 0 && num(t.item.repaid) >= num(t.item.amount));
+    refreshLive(); return;
+  }
+  if (el.dataset.scalar) {
+    const [scope, field] = el.dataset.scalar.split('.');
+    if (scope === 'o') return;
+    if (scope === 'm') { getMonth()[field] = el.value; touchMonth(); }
+    else { state.config[field] = el.value; markDirty('config'); }
+    refreshLive(); return;
+  }
+  if (el.dataset.cell) {
+    const [bid, bm] = el.dataset.cell.split('|'), cells = (state.oldBills.cells[bid] ||= {});
+    if (!String(el.value).trim()) delete cells[bm];
+    else if (cells[bm]) cells[bm].amount = el.value;
+    else { cells[bm] = { amount: el.value, paidIn: state.cur }; if (getMonth()._new) touchMonth(); }
+    el.classList.toggle('filled', !!cells[bm]);
+    markDirty('oldBills'); refreshLive(); return;
+  }
+  if (el.dataset.billname) {
+    const b = state.oldBills.bills.find(x => x.id === el.dataset.billname);
+    if (b) { b.name = el.value; markDirty('oldBills'); }
+    return;
+  }
+  if (el.dataset.rename) {
+    const c = state.config.custom.find(x => x.id === el.dataset.rename);
+    if (c) { c.name = el.value || 'Untitled'; markDirty('config'); renderTabs(); }
+    return;
+  }
+  if ('cats' in el.dataset) {
+    const cats = el.value.split(',').map(s => s.trim()).filter(Boolean);
+    state.config.cats = cats.length ? cats : ['Other']; markDirty('config');
+  }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.counts) {
+    const c = state.config.custom.find(x => x.id === el.dataset.counts);
+    if (c) { c.counts = el.checked; markDirty('config'); if (state.tab.startsWith('c:')) render(); }
+  }
+  if (el.id === 'importFile' && el.files[0]) importBackup(el.files[0]);
+  if (el.dataset.skip) {
+    const [bid, bm] = el.dataset.skip.split('|'), c = (state.oldBills.cells[bid] || {})[bm];
+    if (c) { c.skip = !el.checked; markDirty('oldBills'); const inp = document.querySelector(`[data-cell="${bid}|${bm}"]`); if (inp) inp.classList.toggle('skip', c.skip); refreshLive(); }
+  }
+  if (el.dataset.scalar === 'o.start' && /^\d{4}-\d{2}$/.test(el.value)) { state.oldBills.start = el.value; markDirty('oldBills'); render(); }
+});
+document.addEventListener('click', e => {
+  const el = e.target.closest('button'); if (!el) return;
+  if (el.id === 'prev' || el.id === 'next') { state.cur = shiftMonth(state.cur, el.id === 'prev' ? -1 : 1); render(); return; }
+  if (el.dataset.tab) {
+    state.tab = el.dataset.tab; render(); window.scrollTo(0, 0);
+    if (el.dataset.focus) $('#' + el.dataset.focus)?.focus();
+    return;
+  }
+  if (el.dataset.add) {
+    const [src, key] = el.dataset.add.split(':');
+    const list = src === 'm' ? getMonth().lists[key] : state.ledger[key];
+    const item = { id: rid(), label: '', amount: '' };
+    if (el.dataset.mode === 'date' || el.dataset.mode === 'cat' || el.dataset.mode === 'debt') item.date = new Date().toISOString().slice(0, 10);
+    if (el.dataset.mode === 'cat') item.cat = state.config.cats[0];
+    if (el.dataset.mode === 'bill') item.billFor = state.cur;
+    list.push(item); save(src);
+    const y = window.scrollY; render(); window.scrollTo(0, y);
+    $(`.row[data-id="${item.id}"] input`)?.focus();
+    return;
+  }
+  if ('del' in el.dataset) {
+    const t = rowTarget(el); if (!t) return;
+    t.list.splice(t.list.indexOf(t.item), 1); save(t.src);
+    const y = window.scrollY; render(); window.scrollTo(0, y); return;
+  }
+  if (el.dataset.copy) {
+    const from = state.months[el.dataset.copy], m = getMonth();
+    const gap = monthDiff(el.dataset.copy, state.cur);
+    for (const k of RECURRING) m.lists[k] = (from.lists[k] || []).map(i => ({ ...i, id: rid(), ...(i.billFor ? { billFor: shiftMonth(i.billFor, gap) } : {}) }));
+    m.allowance = from.allowance; m.edu = from.edu;
+    touchMonth(); render(); return;
+  }
+  if (el.id === 'addSection') {
+    const name = $('#newSection').value.trim(); if (!name) { $('#newSection').focus(); return; }
+    const c = { id: 'c' + rid(), name, counts: $('#newCounts').checked };
+    state.config.custom.push(c); markDirty('config');
+    state.tab = 'c:' + c.id; render(); return;
+  }
+  if (el.dataset.removeSection) {
+    const c = state.config.custom.find(x => x.id === el.dataset.removeSection);
+    if (c && confirm(`Delete the "${c.name}" section? Its entries will be hidden.`)) {
+      state.config.custom = state.config.custom.filter(x => x !== c); markDirty('config'); render();
+    }
+    return;
+  }
+  if (el.id === 'addBill') {
+    const name = $('#newBill').value.trim(); if (!name) { $('#newBill').focus(); return; }
+    state.oldBills.bills.push({ id: 'b-' + rid(), name }); markDirty('oldBills'); render(); return;
+  }
+  if (el.dataset.delbill) {
+    const b = state.oldBills.bills.find(x => x.id === el.dataset.delbill);
+    if (b && confirm(`Remove "${b.name}" and all its amounts?`)) {
+      state.oldBills.bills = state.oldBills.bills.filter(x => x !== b); delete state.oldBills.cells[b.id];
+      markDirty('oldBills'); render();
+    }
+    return;
+  }
+  if (el.id === 'hideBtn') {
+    state.hide = !state.hide;
+    try { localStorage.setItem('bs-hide', state.hide ? '1' : '0'); } catch (e) {}
+    render(); return;
+  }
+  if (el.id === 'signInBtn') {
+    el.disabled = true; el.textContent = 'Signing in…';
+    store.signIn().catch(err => { el.disabled = false; el.textContent = 'Sign in with Google'; $('#signMsg').textContent = 'Sign-in failed: ' + (err && err.code ? err.code : 'please try again'); });
+    return;
+  }
+  if (el.id === 'signOutBtn') { if (confirm('Sign out on this device?')) store.signOut(); return; }
+  if (el.id === 'installBtn' && installEvt) { installEvt.prompt(); installEvt = null; el.hidden = true; return; }
+  if (el.id === 'exportBtn') return exportBackup();
+  if (el.id === 'importBtn') return $('#importFile').click();
+});
+
+/* ---------- backup ---------- */
+function snapshotAll() {
+  const out = { config: state.config, ledger: state.ledger, oldBills: state.oldBills };
+  for (const k of savedMonths()) out['m-' + k] = bodyFor('m-' + k);
+  return out;
+}
+async function exportBackup() {
+  const msg = $('#dataMsg');
+  const data = JSON.stringify({ app: 'family-balance-sheet', version: 1, exported: new Date().toISOString(), docs: snapshotAll() }, null, 2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+  a.download = 'balance-sheet-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  msg.textContent = 'Backup downloaded.';
+}
+async function importBackup(file) {
+  const msg = $('#dataMsg');
+  try {
+    const parsed = JSON.parse(await file.text());
+    if (!parsed || parsed.app !== 'family-balance-sheet' || !parsed.docs) throw new Error('bad');
+    if (!confirm('Restore this backup? Months in the backup will replace the same months here.')) return;
+    const docs = parsed.docs;
+    const merged = { config: docs.config || state.config, ledger: docs.ledger || state.ledger, oldBills: docs.oldBills || state.oldBills };
+    for (const k of savedMonths()) merged['m-' + k] = bodyFor('m-' + k);
+    for (const [id, b] of Object.entries(docs)) if (id.startsWith('m-')) merged[id] = b;
+    applyDocs(merged);
+    Object.keys(merged).forEach(id => dirty.add(id));
+    markDirty('config'); render(); msg.textContent = 'Backup restored.';
+  } catch (e) { msg.textContent = 'That file isn\'t a balance sheet backup.'; }
+  $('#importFile').value = '';
+}
+
+/* ---------- sync when returning to the page ---------- */
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || store.kind !== 'cloud' || dirty.size || flushing) return;
+  if (document.activeElement && document.activeElement.matches('input,select')) return;
+  try { applyDocs(await store.loadAll()); render(); } catch (e) {}
+});
+
+/* ---------- start ---------- */
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('#installBtn').hidden = false; });
+window.addEventListener('appinstalled', () => { $('#installBtn').hidden = true; });
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+
+function signInScreen(msg) {
+  $('#tabs').innerHTML = ''; $('.month').style.visibility = 'hidden';
+  $('#main').innerHTML = `<section class="hero" style="max-width:460px;margin:8vh auto 0;text-align:center">
+    <div class="hero-num" style="font-size:2.4rem">Balance sheet</div>
+    <p class="lede" style="margin:0 auto 24px">Sign in with Google to see your data. Use the same account on every phone and computer.</p>
+    <button class="btn primary" id="signInBtn" style="padding:12px 22px">Sign in with Google</button>
+    <p class="hint" id="signMsg" style="margin-top:14px">${esc(msg || '')}</p></section>`;
+}
+(async () => {
+  try { await store.init(); }
+  catch (e) { store.kind = 'local'; setStatus('Sync failed to start', true); }
+  if (store.kind === 'signin') { signInScreen(); return; }
+  try { applyDocs(await store.loadAll()); }
+  catch (e) { applyDocs({}); setStatus('Could not load', true); }
+  if (!$('#status').classList.contains('err')) setStatus(store.kind === 'cloud' ? 'Synced' : 'This device only');
+  render();
+})();
+})();
+</script>
+</body>
+</html>
