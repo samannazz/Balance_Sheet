@@ -233,7 +233,17 @@ const CAT_COLORS = ['#2A8F8A', '#C08A22', '#8A68B0', '#3B78A3', '#B0476E', '#4D9
 const state = { config: null, ledger: null, months: {}, cur: monthKey(new Date()), tab: 'overview', hide: (() => { try { return localStorage.getItem('bs-hide') === '1'; } catch (e) { return false; } })() };
 
 function getMonth(k = state.cur) {
-  if (!state.months[k]) state.months[k] = { month: k, lists: seedLists(), allowance: '', edu: '', _new: true };
+  if (!state.months[k]) {
+    // a new month starts with the previous month's regular amounts
+    const prev = prevSaved(k);
+    const m = { month: k, lists: seedLists(), allowance: '', edu: '', _new: true };
+    if (prev) {
+      const from = state.months[prev], gap = monthDiff(prev, k);
+      for (const key of RECURRING) m.lists[key] = (from.lists[key] || []).map(i => ({ ...i, id: rid(), ...(i.billFor ? { billFor: shiftMonth(i.billFor, gap) } : {}) }));
+      m.allowance = from.allowance; m.edu = from.edu; m._from = prev;
+    }
+    state.months[k] = m;
+  }
   const m = state.months[k];
   for (const c of state.config.custom) m.lists[c.id] ||= [];
   for (const key of Object.keys(seedLists())) m.lists[key] ||= [];
@@ -362,7 +372,7 @@ function bodyFor(id) {
   if (id === 'config') return state.config;
   if (id === 'ledger') return state.ledger;
   if (id === 'oldBills') return state.oldBills;
-  const { _new, ...rest } = state.months[id.slice(2)];
+  const { _new, _from, ...rest } = state.months[id.slice(2)];
   return rest;
 }
 async function flush() {
@@ -473,7 +483,7 @@ const views = {
         <text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="13" fill="${k === state.cur ? 'var(--ink)' : 'var(--muted)'}" font-weight="${k === state.cur ? 700 : 400}">${esc(monthLabel(k, true))}</text></g>`;
     }).join('');
     return `
-      ${m._new && prev ? copyBanner(prev) : ''}
+      ${bannerIfNeeded()}
       <section class="hero">
         <div class="hero-label" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span>Money in hand at the end of ${esc(monthLabel(state.cur))}</span>
           <button class="btn" id="hideBtn" aria-pressed="${state.hide}" style="margin-left:auto;padding:6px 12px">${state.hide ? 'Show amounts' : 'Hide amounts'}</button></div>
@@ -660,11 +670,11 @@ const liveRenderers = {
     return fmt(savedMonths().concat(state.cur).filter((v, i, a) => a.indexOf(v) === i).reduce((s, k) => s + sum(getMonth(k).lists.newHouse), 0));
   }
 };
-function copyBanner(prev) {
-  return `<div class="banner"><p>${esc(monthLabel(state.cur))} is empty. Copy regular amounts (income, rent, bills, home, pocket money, donation, allowance) from ${esc(monthLabel(prev))}?</p>
-    <button class="btn primary" data-copy="${esc(prev)}">Copy from ${esc(monthLabel(prev, true))}</button></div>`;
+function copyBanner(m) {
+  return `<div class="banner"><p>${esc(monthLabel(state.cur))} started with ${esc(monthLabel(m._from))}’s regular amounts (income, rent, bills, home, pocket money, donation, allowance). Change anything that’s different this month. Your ${esc(monthLabel(m._from, true))} data is still there: use ‹ at the top.</p>
+    <button class="btn primary" data-keep>Keep these</button><button class="btn" data-clear>Start empty instead</button></div>`;
 }
-function bannerIfNeeded() { const m = getMonth(), p = prevSaved(state.cur); return m._new && p ? copyBanner(p) : ''; }
+function bannerIfNeeded() { const m = getMonth(); return m._new && m._from ? copyBanner(m) : ''; }
 
 function render() {
   $('#monthLabel').textContent = monthLabel(state.cur);
@@ -744,7 +754,16 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('click', e => {
   const el = e.target.closest('button'); if (!el) return;
-  if (el.id === 'prev' || el.id === 'next') { state.cur = shiftMonth(state.cur, el.id === 'prev' ? -1 : 1); render(); return; }
+  if (el.id === 'prev' || el.id === 'next') {
+    state.cur = shiftMonth(state.cur, el.id === 'prev' ? -1 : 1);
+    if (state.months[state.cur] && state.months[state.cur]._new) delete state.months[state.cur]; // rebuild from the latest saved month
+    render(); return;
+  }
+  if ('keep' in el.dataset) { const m = getMonth(); delete m._from; touchMonth(); render(); return; }
+  if ('clear' in el.dataset) {
+    const m = getMonth(); m.lists = seedLists(); m.allowance = ''; m.edu = ''; delete m._from;
+    touchMonth(); render(); return;
+  }
   if (el.dataset.tab) {
     state.tab = el.dataset.tab; render(); window.scrollTo(0, 0);
     if (el.dataset.focus) $('#' + el.dataset.focus)?.focus();

@@ -1,5 +1,5 @@
 // Balance sheet service worker: app works offline, updates load when online.
-const CACHE = 'balance-sheet-v1';
+const CACHE = 'balance-sheet-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './firebase-config.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png'];
 
